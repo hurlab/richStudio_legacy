@@ -2,8 +2,6 @@
 # Shiny web application for integrative enrichment analysis and visualization
 #
 
-APP_OBJ <- tryCatch({
-
 library(shiny)
 library(shinydashboard)
 library(shinyjs)
@@ -24,12 +22,19 @@ library(bioAnno)
 
 library(shinyWidgets) # Installed from GitHub
 
+#Set working directory
+# getwd()
+# library(rstudioapi)
+# current_path <- getActiveDocumentContext()$path
+# setwd(dirname(current_path))
+# base_dir = dirname(current_path)
+# output = "output/"
+
 # Set working directory with config.yml
 config_vars <- config::get("hurlab-server")
 setwd(config_vars$project_directory)
 
-# Comment out for production
-# options(shiny.error = browser)
+options(shiny.error = browser)
 
 # Source related scripts
 source("file_handling.R")
@@ -53,17 +58,19 @@ source('clus_visualize_tab.R')
 
 
 ui <- dashboardPage(
-  dashboardHeader(title = "RichStudio v0.1.4"),
+  dashboardHeader(title = "RichStudio v0.1.3"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Home", icon=icon("house"), tabName="home_tab"),
       menuItem("Enrichment", icon=icon("flask"), tabName = "enrich_tab_group",
         menuSubItem("Enrich", icon=icon("upload"), tabName="enrich_tab"),
         menuSubItem("Visualize", icon=icon("dna"), tabName="rr_visualize_tab")
+        #menuSubItem("Export", icon=icon("file-export"), tabName="export_rr_tab")
       ),
       menuItem("Clustering", icon=icon("layer-group"), tabName="cluster_tab_group",
         menuSubItem("Cluster", icon=icon("upload"), tabName="cluster_tab"),
         menuSubItem("Visualize", icon=icon("layer-group"), tabName="clus_visualize_tab")
+        #menuSubItem("Export", icon=icon("file-export"), tabName="export_cluster_tab")
       )
     )
   ),
@@ -120,6 +127,7 @@ server <- function(input, output) {
   rrVisTabServer("rr_visualize", u_degnames=u_degnames, u_degdfs=u_degdfs, u_big_degdf=u_big_degdf, 
                   u_rrnames=u_rrnames, u_rrdfs=u_rrdfs, u_big_rrdf=u_big_rrdf,
                   u_clusnames=u_clusnames, u_clusdfs=u_clusdfs, u_cluslists=u_cluslists)
+  #uploadRichTabServer()
   clusterTabServer("cluster", u_degnames=u_degnames, u_degdfs=u_degdfs, 
                    u_rrnames=u_rrnames, u_rrdfs=u_rrdfs, u_big_rrdf=u_big_rrdf,
                    u_clusnames=u_clusnames, u_clusdfs=u_clusdfs, u_big_clusdf=u_big_clusdf, u_cluslists=u_cluslists)
@@ -131,31 +139,5 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
-}, error = function(e) {
-  shiny::shinyApp(
-    ui = shiny::fluidPage(
-      shiny::tags$head(
-        shiny::tags$title("richStudio temporarily unavailable"),
-        shiny::tags$style("
-          body { font-family: sans-serif; text-align: center; margin-top: 80px; }
-          h2 { color: #c0392b; }
-          a { color: #2980b9; text-decoration: none; font-weight: bold; }
-        ")
-      ),
-      shiny::h2("richStudio is temporarily unavailable"),
-      shiny::p("We are updating the server configuration. Please check back soon."),
-      shiny::p(
-        "Visit the project on ",
-        shiny::a("GitHub", href = "https://github.com/hurlab/richStudio", target = "_blank"),
-        " for updates and source code."
-      ),
-      shiny::hr(),
-      shiny::p("Error details:"),
-      shiny::pre(paste(capture.output(print(e)), collapse = '\n'))
-    ),
-    server = function(input, output, session) {}
-  )
-})
 
-# Return either the real app or fallback
-APP_OBJ
+
